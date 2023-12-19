@@ -33,18 +33,38 @@ example (x y z : ℝ) (h₀ : x ≤ y) (h₁ : y ≤ z) : x ≤ z :=
 example (x : ℝ) : x ≤ x := by
   apply le_refl
 
+example (x : ℝ) : x ≤ x := by
+  exact le_refl x
+
 example (x : ℝ) : x ≤ x :=
   le_refl x
 
 #check (le_refl : ∀ a, a ≤ a)
-#check (le_trans : a ≤ b → b ≤ c → a ≤ c)
+#check (le_trans : a ≤ b → b ≤ c → a ≤ c)  -- Why doesn't this line have quantifiers?
 #check (lt_of_le_of_lt : a ≤ b → b < c → a < c)
 #check (lt_of_lt_of_le : a < b → b ≤ c → a < c)
 #check (lt_trans : a < b → b < c → a < c)
 
+theorem lt_of_le_of_le (h₀ : a < b) (h₁ : b ≤ c) : a ≤ c := by
+  sorry
+
+theorem lt_imp_le (h₀ : a < b) : a ≤ b := by
+  -- Proof sketch:
+  -- a < b <= b
+  -- a <= b
+  -- Problem: I don't have a theorem of the form a < b and b <= c => a <=
+  -- #check (le_of_lt_of_le)
+  apply lt_of_le_of_le a b
+  · exact h₀
+  · exact le_refl b
+
 -- Try this.
 example (h₀ : a ≤ b) (h₁ : b < c) (h₂ : c ≤ d) (h₃ : d < e) : a < e := by
-  sorry
+  apply lt_of_le_of_lt
+  · apply h₀
+  · apply lt_of_lt_of_le h₁
+    apply lt_imp_le
+    apply lt_of_le_of_lt h₂ h₃
 
 example (h₀ : a ≤ b) (h₁ : b < c) (h₂ : c ≤ d) (h₃ : d < e) : a < e := by
   linarith
@@ -86,9 +106,14 @@ example (h₀ : a ≤ b) (h₁ : c < d) : a + exp c + e < b + exp d + e := by
     apply exp_lt_exp.mpr h₁
   apply le_refl
 
-example (h₀ : d ≤ e) : c + exp (a + d) ≤ c + exp (a + e) := by sorry
+#check norm_num
 
-example : (0 : ℝ) < 1 := by norm_num
+example (h₀ : d ≤ e) : c + exp (a + d) ≤ c + exp (a + e) := by
+  apply add_le_add_left
+  apply exp_le_exp.mpr
+  apply add_le_add_left h₀
+
+example : (0 : ℝ) < 1 := by norm_num  -- norm_num solves concrete numeric goals
 
 example (h : a ≤ b) : log (1 + exp a) ≤ log (1 + exp b) := by
   have h₀ : 0 < 1 + exp a := by sorry
@@ -121,8 +146,28 @@ example : 2 * a * b ≤ a ^ 2 + b ^ 2 := by
     _ ≥ 0 := by apply pow_two_nonneg
   linarith
 
-example : |a * b| ≤ (a ^ 2 + b ^ 2) / 2 := by
-  sorry
-
 #check abs_le'.mpr
+#check Lean.Constructor
+#check le_div_iff
+#check add_le_add
 
+example : |a * b| ≤ (a ^ 2 + b ^ 2) / 2 := by
+  -- Proof sketch:
+  -- a * b ≤ (a^2 + b^2)/2 and -a*b ≤ a^2+b^2/2
+  -- Case 1: 2ab ≤ a^2 + b^2 ↔ 0 ≤ (a-b)^2
+  -- Case 2: -2ab ≤ ^2 + b^2 ↔ 0 ≤ (a+b)^2
+  apply abs_le'.mpr
+  have h : (0 : ℝ) < 2 := by norm_num
+  constructor
+  · rw [le_div_iff h]
+    have h : 0 ≤ a^2 - 2*a*b + b^2
+    calc
+      a^2 - 2*a*b + b^2 = (a-b)^2 := by ring
+      _ ≥ 0 := by exact pow_two_nonneg (a-b)
+    calc
+      a * b * 2 = 2 * a * b + 0 := by ring
+      _ ≤ 2 * a * b + (a^2 - 2*a*b + b^2) := add_le_add (le_refl _) h
+      _ = a^2 + b^2 := by ring
+  · sorry  -- This follows analogous
+
+-- a^2 - a*b + b^2 ≤ (a^2 + b^2) / 2

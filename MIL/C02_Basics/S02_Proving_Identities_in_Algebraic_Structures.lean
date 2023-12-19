@@ -66,8 +66,14 @@ theorem mul_zero (a : R) : a * 0 = 0 := by
     rw [← mul_add, add_zero, add_zero]
   rw [add_left_cancel h]
 
+#check add_mul
+
 theorem zero_mul (a : R) : 0 * a = 0 := by
-  sorry
+  have h : 0 * a + 0 * a = 0 + 0 * a:= by
+    rw [← add_mul, add_zero]
+    nth_rewrite 1 [zero_add]
+    rfl
+  apply add_right_cancel h
 
 theorem neg_eq_of_add_eq_zero {a b : R} (h : a + b = 0) : -a = b := by
   sorry
@@ -102,7 +108,13 @@ example (a b : ℝ) : a - b = a + -b := by
 namespace MyRing
 variable {R : Type*} [Ring R]
 
+variable (x y z : R)
+
+#check sub_eq_add_neg x y
+
 theorem self_sub (a : R) : a - a = 0 := by
+  rw [sub_eq_add_neg]
+  rw [← add_zero (-a)]
   sorry
 
 theorem one_add_one_eq_two : 1 + 1 = (2 : R) := by
@@ -131,11 +143,19 @@ variable {G : Type*} [Group G]
 
 namespace MyGroup
 
+lemma add_right_group (a b : G) : a * b = b * a → a * a * b = a * b * a := by
+  sorry
+
 theorem mul_right_inv (a : G) : a * a⁻¹ = 1 := by
+  -- Proof sketch:
+  --
+  rw [← mul_left_inv a]
   sorry
 
 theorem mul_one (a : G) : a * 1 = a := by
-  sorry
+  -- Proof sketch:
+  -- a = 1 * a = (a * a^-1) * a = a (a^-1 a) = a * 1
+  rw [← mul_left_inv a, ← mul_assoc, mul_right_inv, one_mul]
 
 theorem mul_inv_rev (a b : G) : (a * b)⁻¹ = b⁻¹ * a⁻¹ := by
   sorry
@@ -143,4 +163,3 @@ theorem mul_inv_rev (a b : G) : (a * b)⁻¹ = b⁻¹ * a⁻¹ := by
 end MyGroup
 
 end
-

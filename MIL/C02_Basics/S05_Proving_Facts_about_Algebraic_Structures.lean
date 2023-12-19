@@ -104,7 +104,13 @@ variable (x y z : X)
 #check (dist_triangle x y z : dist x z ≤ dist x y + dist y z)
 
 example (x y : X) : 0 ≤ dist x y := by
-  sorry
+  -- Proof sketch:
+  -- d(x,y) ≤ d(x,x) + d(x,y) ≤ d(x,y) + d(y,x) + d(x,y) = 3*d(x,y)
+  -- 0 ≤ 2*d(x,y)
+  have h : 0 ≤ dist x y + dist y x := by
+    rw [← dist_self x]
+    apply dist_triangle
+  rw [dist_comm y x] at h
+  linarith
 
 end
-
